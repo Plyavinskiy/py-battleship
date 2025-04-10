@@ -17,15 +17,10 @@ class Deck:
 
 
 class Ship:
-    def __init__(
-        self,
-        start: tuple[int, int],
-        end: tuple[int, int],
-        is_drowned: bool = False
-    ) -> None:
+    def __init__(self, start: tuple[int, int], end: tuple[int, int]) -> None:
         self.start = start
         self.end = end
-        self.is_drowned = is_drowned
+        self.is_drowned = False
         self.decks: list[Deck] = []
 
         start_row, start_column = start
