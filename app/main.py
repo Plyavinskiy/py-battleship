@@ -1,28 +1,45 @@
-from app.battleship import Battleship, generate_random_ship_coordinates
+from app.battleship import Battleship
+from app.constants import GRID_SIZE, SYMBOL_LEGEND_LINES
+from app.ship_generator import generate_random_ship_coordinates
+
+
+def print_symbol_legend() -> None:
+    print("\nSYMBOL LEGEND:")
+    print("\n".join(SYMBOL_LEGEND_LINES))
 
 
 def main() -> None:
     ship_coordinates = generate_random_ship_coordinates()
     game = Battleship(ship_coordinates)
 
-    print("\nWelcome to Battleship!\n")
-    print(game)
+    print("\nWelcome to Battleship!")
+    print_symbol_legend()
+    print("\n" + str(game))
 
     while not game.is_game_over():
         try:
-            target_input = input("\nEnter target (row column): ")
-            target_row, target_column = map(int, target_input.strip().split())
+            user_input = input(
+                f"\nEnter target (row column, from 1 to {GRID_SIZE}): "
+            )
+            parts = user_input.strip().split()
 
-            if not (0 <= target_row < 10 and 0 <= target_column < 10):
-                print("Coordinates must be between 0 and 9.")
+            if len(parts) != 2 or not all(part.isdigit() for part in parts):
+                print(f"Please enter two numbers from 1 to {GRID_SIZE}.")
                 continue
 
-            shot_result = game.fire((target_row, target_column))
-            print(shot_result)
-            print(game)
+            row = int(parts[0]) - 1
+            col = int(parts[1]) - 1
+
+            if not (0 <= row < GRID_SIZE and 0 <= col < GRID_SIZE):
+                print(f"Coordinates must be between 1 and {GRID_SIZE}.")
+                continue
+
+            result = game.fire((row, col))
+            print(result)
+            print("\n" + str(game))
 
         except ValueError:
-            print("Invalid input. Use format: row column (e.g., 2 3)")
+            print("Invalid input. Use format: row column (e.g., 5 7)")
         except KeyboardInterrupt:
             print("\nGame aborted.")
             break
