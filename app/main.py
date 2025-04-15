@@ -28,13 +28,13 @@ def main() -> None:
                 continue
 
             row = int(parts[0]) - 1
-            col = int(parts[1]) - 1
+            column = int(parts[1]) - 1
 
-            if not (0 <= row < GRID_SIZE and 0 <= col < GRID_SIZE):
+            if not (0 <= row < GRID_SIZE and 0 <= column < GRID_SIZE):
                 print(f"Coordinates must be between 1 and {GRID_SIZE}.")
                 continue
 
-            result = game.fire((row, col))
+            result = game.fire((row, column))
             print(result)
             print("\n" + str(game))
 

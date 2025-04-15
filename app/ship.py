@@ -14,16 +14,18 @@ class Ship:
 
         if start_row == end_row:
             for column in range(start_column, end_column + 1):
-                self.decks.append(Deck(row=start_row, column=column))
+                position = (start_row, column)
+                self.decks.append(Deck(position=position))
         elif start_column == end_column:
             for row in range(start_row, end_row + 1):
-                self.decks.append(Deck(row=row, column=start_column))
+                position = (row, start_column)
+                self.decks.append(Deck(position=position))
         else:
             raise ValueError("Ship must be placed in a straight line")
 
     def get_deck(self, position: Cell) -> Deck:
         for deck in self.decks:
-            if (deck.row, deck.column) == position:
+            if deck.position == position:
                 return deck
         raise ValueError(f"Deck not found at {position}")
 

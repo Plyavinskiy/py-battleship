@@ -1,6 +1,6 @@
 from app.constants import (
     GRID_SIZE,
-    EXPECTED_SHIP_COUNTS,
+    EXPECTED_SHIPS_BY_DECK_SIZE,
     SYMBOL_ALIVE,
     SYMBOL_SUNK,
     SYMBOL_MISS,
@@ -25,26 +25,32 @@ class Battleship:
             ship = Ship(start, end)
             self.ships.append(ship)
             for deck in ship.decks:
-                self.field[(deck.row, deck.column)] = ship
+                self.field[deck.position] = ship
 
         self._validate_field()
 
     def _validate_field(self) -> None:
-        if len(self.ships) != sum(EXPECTED_SHIP_COUNTS.values()):
-            raise ValueError("Invalid number of ships")
+        expected_total = sum(EXPECTED_SHIPS_BY_DECK_SIZE.values())
+        actual_total = len(self.ships)
 
-        actual_counts = {size: 0 for size in EXPECTED_SHIP_COUNTS}
+        if actual_total != expected_total:
+            raise ValueError(
+                f"{expected_total} ships expected, "
+                f"but found {actual_total}"
+            )
+
+        ships_by_size = {
+            size: 0 for size in EXPECTED_SHIPS_BY_DECK_SIZE
+        }
 
         for ship in self.ships:
             size = ship.get_size()
-            if size not in actual_counts:
+            if size not in ships_by_size:
                 raise ValueError(f"Invalid ship size: {size}")
-            actual_counts[size] += 1
+            ships_by_size[size] += 1
 
             for deck in ship.decks:
-                for neighbor in get_surrounding_cells(
-                    [(deck.row, deck.column)]
-                ):
+                for neighbor in get_surrounding_cells([deck.position]):
                     if (
                         neighbor in self.field
                         and self.field[neighbor] is not ship
@@ -54,33 +60,33 @@ class Battleship:
                             "each other"
                         )
 
-        for size, expected in EXPECTED_SHIP_COUNTS.items():
-            actual = actual_counts[size]
-            if actual != expected:
+        for size, expected_count in EXPECTED_SHIPS_BY_DECK_SIZE.items():
+            actual_count = ships_by_size[size]
+            if actual_count != expected_count:
                 raise ValueError(
-                    f"{expected} ship(s) of size {size} required, "
-                    f"found {actual}"
+                    f"{expected_count} ship(s) of size {size} required, "
+                    f"but found {actual_count}"
                 )
-
-    def _is_surrounding_sunk_ship(self, cell: Cell) -> bool:
-        for ship in self.ships:
-            if ship.is_drowned:
-                surrounding = get_surrounding_cells(
-                    [(deck.row, deck.column) for deck in ship.decks]
-                )
-                if cell in surrounding and cell not in self.field:
-                    return True
-        return False
 
     def fire(self, target: Cell) -> str:
         self.shots.add(target)
 
         if target in self.field:
             ship = self.field[target]
-            ship.fire(*target)
+            ship.fire(target)
             return SHOT_SUNK if ship.is_drowned else SHOT_HIT
 
         return SHOT_MISS
+
+    def _is_surrounding_sunk_ship(self, cell: Cell) -> bool:
+        for ship in self.ships:
+            if ship.is_drowned:
+                surrounding = get_surrounding_cells(
+                    [deck.position for deck in ship.decks]
+                )
+                if cell in surrounding and cell not in self.field:
+                    return True
+        return False
 
     def get_remaining_ships(self) -> int:
         return sum(1 for ship in self.ships if not ship.is_drowned)
@@ -101,8 +107,8 @@ class Battleship:
 
         for row in range(GRID_SIZE):
             line = f"{row + 1: <2} "
-            for col in range(GRID_SIZE):
-                cell = (row, col)
+            for column in range(GRID_SIZE):
+                cell = (row, column)
 
                 if cell in self.field:
                     ship = self.field[cell]
