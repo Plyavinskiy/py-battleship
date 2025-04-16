@@ -1,14 +1,15 @@
 from app.constants import (
-    GRID_SIZE,
     EXPECTED_SHIPS_BY_DECK_SIZE,
+    GRID_SIZE,
+    SHOT_HIT,
+    SHOT_MISS,
+    SHOT_REPEAT,
+    SHOT_SUNK,
     SYMBOL_ALIVE,
-    SYMBOL_SUNK,
-    SYMBOL_MISS,
     SYMBOL_AROUND,
     SYMBOL_EMPTY,
-    SHOT_HIT,
-    SHOT_SUNK,
-    SHOT_MISS,
+    SYMBOL_MISS,
+    SYMBOL_SUNK,
 )
 from app.field_utils import get_surrounding_cells
 from app.ship import Ship
@@ -39,9 +40,7 @@ class Battleship:
                 f"but found {actual_total}"
             )
 
-        ships_by_size = {
-            size: 0 for size in EXPECTED_SHIPS_BY_DECK_SIZE
-        }
+        ships_by_size = {size: 0 for size in EXPECTED_SHIPS_BY_DECK_SIZE}
 
         for ship in self.ships:
             size = ship.get_size()
@@ -69,63 +68,66 @@ class Battleship:
                 )
 
     def fire(self, target: Cell) -> str:
+        if target in self.shots:
+            return SHOT_REPEAT
+
         self.shots.add(target)
 
         if target in self.field:
             ship = self.field[target]
-            ship.fire(target)
+            ship.hit(target)
             return SHOT_SUNK if ship.is_drowned else SHOT_HIT
 
         return SHOT_MISS
 
-    def _is_surrounding_sunk_ship(self, cell: Cell) -> bool:
+    def _is_adjacent_to_sunk_ship(self, cell: Cell) -> bool:
         for ship in self.ships:
-            if ship.is_drowned:
-                surrounding = get_surrounding_cells(
-                    [deck.position for deck in ship.decks]
-                )
-                if cell in surrounding and cell not in self.field:
-                    return True
+            if not ship.is_drowned:
+                continue
+
+            surrounding_cells = get_surrounding_cells(
+                [deck.position for deck in ship.decks]
+            )
+
+            if cell in surrounding_cells and cell not in self.field:
+                return True
+
         return False
 
-    def get_remaining_ships(self) -> int:
+    @property
+    def remaining_ships(self) -> int:
         return sum(1 for ship in self.ships if not ship.is_drowned)
 
+    @property
     def is_game_over(self) -> bool:
         return all(ship.is_drowned for ship in self.ships)
 
     def __str__(self) -> str:
-        # SYMBOL LEGEND:
-        #   □ — alive deck         (U+25A1)
-        #   ■ — sunk/hit deck      (U+25A0)
-        #   • — missed shot        (U+2022)
-        #   ✖ — surrounding area   (U+2716)
-        #   · — untouched cell     (U+00B7)
-
         header = "   " + " ".join(str(i) for i in range(1, GRID_SIZE + 1))
         lines = [header]
 
         for row in range(GRID_SIZE):
             line = f"{row + 1: <2} "
             for column in range(GRID_SIZE):
-                cell = (row, column)
+                position = (row, column)
 
-                if cell in self.field:
-                    ship = self.field[cell]
-                    deck = ship.get_deck(cell)
+                if position in self.field:
+                    ship = self.field[position]
+                    deck = ship.get_deck(position)
+
                     if ship.is_drowned or not deck.is_alive:
                         line += f"{SYMBOL_SUNK} "
-                    elif cell in self.shots:
-                        line += f"{SYMBOL_MISS} "
                     else:
                         line += f"{SYMBOL_ALIVE} "
+
                 else:
-                    if self._is_surrounding_sunk_ship(cell):
+                    if self._is_adjacent_to_sunk_ship(position):
                         line += f"{SYMBOL_AROUND} "
-                    elif cell in self.shots:
+                    elif position in self.shots:
                         line += f"{SYMBOL_MISS} "
                     else:
                         line += f"{SYMBOL_EMPTY} "
+
             lines.append(line.strip())
 
         return "\n".join(lines)
@@ -133,5 +135,5 @@ class Battleship:
     def __repr__(self) -> str:
         return (
             f"Battleship(ships={len(self.ships)}, "
-            f"remaining={self.get_remaining_ships()})"
+            f"remaining={self.remaining_ships})"
         )

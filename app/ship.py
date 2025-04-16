@@ -29,7 +29,7 @@ class Ship:
                 return deck
         raise ValueError(f"Deck not found at {position}")
 
-    def fire(self, position: Cell) -> None:
+    def hit(self, position: Cell) -> None:
         self.get_deck(position).hit()
 
     def get_size(self) -> int:

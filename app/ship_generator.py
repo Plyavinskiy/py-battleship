@@ -25,16 +25,19 @@ def _place_ship(size: int, occupied: set[Cell]) -> list[Cell]:
 
         if is_horizontal:
             row = random.randint(0, GRID_SIZE - 1)
-            col = random.randint(0, GRID_SIZE - size)
-            cells = [(row, col + i) for i in range(size)]
+            column = random.randint(0, GRID_SIZE - size)
+            cells = [(row, column + i) for i in range(size)]
         else:
             row = random.randint(0, GRID_SIZE - size)
-            col = random.randint(0, GRID_SIZE - 1)
-            cells = [(row + i, col) for i in range(size)]
+            column = random.randint(0, GRID_SIZE - 1)
+            cells = [(row + i, column) for i in range(size)]
 
         if all(cell not in occupied for cell in get_surrounding_cells(cells)):
             return cells
 
 
 def _expand_ship_counts(counts: dict[int, int]) -> list[int]:
-    return [size for size, count in counts.items() for _ in range(count)]
+    return [
+        size for size, count in counts.items()
+        for _ in range(count)
+    ]

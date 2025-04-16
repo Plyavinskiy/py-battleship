@@ -16,7 +16,7 @@ def main() -> None:
     print_symbol_legend()
     print("\n" + str(game))
 
-    while not game.is_game_over():
+    while not game.is_game_over:
         try:
             user_input = input(
                 f"\nEnter target (row column, from 1 to {GRID_SIZE}): "
