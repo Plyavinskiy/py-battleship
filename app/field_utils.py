@@ -1,5 +1,5 @@
 from app.constants import GRID_SIZE
-from app.types import Cell
+from app.types_aliases import Cell
 
 
 def get_surrounding_cells(positions: list[Cell]) -> set[Cell]:

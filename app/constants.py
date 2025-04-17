@@ -1,43 +1,40 @@
-# Grid size: 10x10
+# Game board size (10 rows × 10 columns)
 GRID_SIZE = 10
 
-# Expected ships grouped by deck size (decks per ship)
+# Number of ships per deck size
 EXPECTED_SHIPS_BY_DECK_SIZE = {
-    1: 4,  # Single-deck
-    2: 3,  # Double-deck
-    3: 2,  # Triple-deck
-    4: 1,  # Four-deck
+    1: 4,  # Single-deck ships
+    2: 3,  # Double-deck ships
+    3: 2,  # Triple-deck ships
+    4: 1,  # Four-deck ships
 }
 
-# Ordered ship sizes used for random generation
-RANDOM_SHIP_SIZES = [4] + [3] * 2 + [2] * 3 + [1] * 4
+# Board symbols (Unicode)
+SYMBOL_ALIVE = "□"    # U+25A1
+SYMBOL_AROUND = "✖"   # U+2716
+SYMBOL_EMPTY = "·"    # U+00B7
+SYMBOL_MISS = "•"     # U+2022
+SYMBOL_SUNK = "■"     # U+25A0
 
-# Unicode symbols for board display
-SYMBOL_ALIVE = "□"  # U+25A1
-SYMBOL_SUNK = "■"   # U+25A0
-SYMBOL_MISS = "•"   # U+2022
-SYMBOL_AROUND = "✖"  # U+2716
-SYMBOL_EMPTY = "·"   # U+00B7
-
-# Symbol legend (shown before the game starts)
+# Symbol legend (displayed at the start of the game)
 SYMBOL_LEGEND_LINES = [
     f"  {SYMBOL_ALIVE} — alive deck",
     f"  {SYMBOL_SUNK} — sunk or hit deck",
-    f"  {SYMBOL_MISS} — missed shot",
-    f"  {SYMBOL_AROUND} — surrounding area",
     f"  {SYMBOL_EMPTY} — untouched cell",
+    f"  {SYMBOL_MISS} — missed shot",
+    f"  {SYMBOL_AROUND} — surrounding area"
 ]
 
-# Deck status labels
+# Deck status values
 DECK_ALIVE = "alive"
 DECK_HIT = "hit"
 
-# Ship status labels
+# Ship status values
 SHIP_AFLOAT = "afloat"
 SHIP_DROWNED = "drowned"
 
-# Shot result messages
+# Messages shown after a shot
 SHOT_HIT = "Hit!"
-SHOT_SUNK = "Sunk!"
 SHOT_MISS = "Miss!"
 SHOT_REPEAT = "You already fired at this location."
+SHOT_SUNK = "Sunk!"

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from app.constants import DECK_ALIVE, DECK_HIT
-from app.types import Cell
+from app.types_aliases import Cell
 
 
 @dataclass(slots=True)
@@ -24,5 +24,5 @@ class Deck:
         status = DECK_ALIVE if self.is_alive else DECK_HIT
         return (
             f"Deck(row={self.row}, column={self.column}, "
-            f"status={status})"
+            f"status='{status}')"
         )

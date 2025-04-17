@@ -1,5 +1,6 @@
 from app.battleship import Battleship
 from app.constants import GRID_SIZE, SYMBOL_LEGEND_LINES
+from app.input_utils import is_within_bounds, prompt_for_coordinates
 from app.ship_generator import generate_random_ship_coordinates
 
 
@@ -18,19 +19,15 @@ def main() -> None:
 
     while not game.is_game_over:
         try:
-            user_input = input(
-                f"\nEnter target (row column, from 1 to {GRID_SIZE}): "
-            )
-            parts = user_input.strip().split()
+            coordinates = prompt_for_coordinates()
 
-            if len(parts) != 2 or not all(part.isdigit() for part in parts):
+            if coordinates is None:
                 print(f"Please enter two numbers from 1 to {GRID_SIZE}.")
                 continue
 
-            row = int(parts[0]) - 1
-            column = int(parts[1]) - 1
+            row, column = coordinates
 
-            if not (0 <= row < GRID_SIZE and 0 <= column < GRID_SIZE):
+            if not is_within_bounds(row, column):
                 print(f"Coordinates must be between 1 and {GRID_SIZE}.")
                 continue
 
@@ -39,7 +36,7 @@ def main() -> None:
             print("\n" + str(game))
 
         except ValueError:
-            print("Invalid input. Use format: row column (e.g., 5 7)")
+            print("Invalid input. Please enter two numbers (e.g., 5 7).")
         except KeyboardInterrupt:
             print("\nGame aborted.")
             break

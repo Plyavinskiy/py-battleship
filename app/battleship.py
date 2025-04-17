@@ -9,15 +9,15 @@ from app.constants import (
     SYMBOL_AROUND,
     SYMBOL_EMPTY,
     SYMBOL_MISS,
-    SYMBOL_SUNK,
+    SYMBOL_SUNK
 )
 from app.field_utils import get_surrounding_cells
 from app.ship import Ship
-from app.types import Cell, ShipCoordinates
+from app.types_aliases import Cell, ShipCoords
 
 
 class Battleship:
-    def __init__(self, ships: ShipCoordinates) -> None:
+    def __init__(self, ships: ShipCoords) -> None:
         self.ships: list[Ship] = []
         self.field: dict[Cell, Ship] = {}
         self.shots: set[Cell] = set()
@@ -29,6 +29,62 @@ class Battleship:
                 self.field[deck.position] = ship
 
         self._validate_field()
+
+    @property
+    def remaining_ships(self) -> int:
+        return sum(1 for ship in self.ships if not ship.is_drowned)
+
+    @property
+    def is_game_over(self) -> bool:
+        return all(ship.is_drowned for ship in self.ships)
+
+    def fire(self, target: Cell) -> str:
+        if target in self.shots:
+            return SHOT_REPEAT
+
+        self.shots.add(target)
+
+        if target in self.field:
+            ship = self.field[target]
+            ship.hit(target)
+            return SHOT_SUNK if ship.is_drowned else SHOT_HIT
+
+        return SHOT_MISS
+
+    def __str__(self) -> str:
+        header = "   " + " ".join(str(i) for i in range(1, GRID_SIZE + 1))
+        lines = [header]
+
+        for row in range(GRID_SIZE):
+            line = f"{row + 1: <2} "
+            for column in range(GRID_SIZE):
+                position = (row, column)
+
+                if position in self.field:
+                    ship = self.field[position]
+                    deck = ship.get_deck(position)
+
+                    if ship.is_drowned or not deck.is_alive:
+                        line += f"{SYMBOL_SUNK} "
+                    else:
+                        line += f"{SYMBOL_ALIVE} "
+                else:
+                    if self._should_mark_sunk_area(position):
+                        line += f"{SYMBOL_AROUND} "
+                    elif position in self.shots:
+                        line += f"{SYMBOL_MISS} "
+                    else:
+                        line += f"{SYMBOL_EMPTY} "
+
+            lines.append(line.strip())
+
+        return "\n".join(lines)
+
+    def __repr__(self) -> str:
+        return (
+            f"Battleship(ships={len(self.ships)}, "
+            f"remaining={self.remaining_ships})"
+        )
 
     def _validate_field(self) -> None:
         expected_total = sum(EXPECTED_SHIPS_BY_DECK_SIZE.values())
@@ -43,7 +99,7 @@ class Battleship:
         ships_by_size = {size: 0 for size in EXPECTED_SHIPS_BY_DECK_SIZE}
 
         for ship in self.ships:
-            size = ship.get_size()
+            size = ship.size
             if size not in ships_by_size:
                 raise ValueError(f"Invalid ship size: {size}")
             ships_by_size[size] += 1
@@ -67,20 +123,7 @@ class Battleship:
                     f"but found {actual_count}"
                 )
 
-    def fire(self, target: Cell) -> str:
-        if target in self.shots:
-            return SHOT_REPEAT
-
-        self.shots.add(target)
-
-        if target in self.field:
-            ship = self.field[target]
-            ship.hit(target)
-            return SHOT_SUNK if ship.is_drowned else SHOT_HIT
-
-        return SHOT_MISS
-
-    def _is_adjacent_to_sunk_ship(self, cell: Cell) -> bool:
+    def _should_mark_sunk_area(self, cell: Cell) -> bool:
         for ship in self.ships:
             if not ship.is_drowned:
                 continue
@@ -93,47 +136,3 @@ class Battleship:
                 return True
 
         return False
-
-    @property
-    def remaining_ships(self) -> int:
-        return sum(1 for ship in self.ships if not ship.is_drowned)
-
-    @property
-    def is_game_over(self) -> bool:
-        return all(ship.is_drowned for ship in self.ships)
-
-    def __str__(self) -> str:
-        header = "   " + " ".join(str(i) for i in range(1, GRID_SIZE + 1))
-        lines = [header]
-
-        for row in range(GRID_SIZE):
-            line = f"{row + 1: <2} "
-            for column in range(GRID_SIZE):
-                position = (row, column)
-
-                if position in self.field:
-                    ship = self.field[position]
-                    deck = ship.get_deck(position)
-
-                    if ship.is_drowned or not deck.is_alive:
-                        line += f"{SYMBOL_SUNK} "
-                    else:
-                        line += f"{SYMBOL_ALIVE} "
-
-                else:
-                    if self._is_adjacent_to_sunk_ship(position):
-                        line += f"{SYMBOL_AROUND} "
-                    elif position in self.shots:
-                        line += f"{SYMBOL_MISS} "
-                    else:
-                        line += f"{SYMBOL_EMPTY} "
-
-            lines.append(line.strip())
-
-        return "\n".join(lines)
-
-    def __repr__(self) -> str:
-        return (
-            f"Battleship(ships={len(self.ships)}, "
-            f"remaining={self.remaining_ships})"
-        )

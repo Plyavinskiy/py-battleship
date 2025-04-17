@@ -1,6 +1,6 @@
 from app.constants import SHIP_AFLOAT, SHIP_DROWNED
 from app.deck import Deck
-from app.types import Cell
+from app.types_aliases import Cell
 
 
 class Ship:
@@ -21,7 +21,20 @@ class Ship:
                 position = (row, start_column)
                 self.decks.append(Deck(position=position))
         else:
-            raise ValueError("Ship must be placed in a straight line")
+            raise ValueError(
+                "Ship must be placed horizontally or vertically"
+            )
+
+    @property
+    def size(self) -> int:
+        return len(self.decks)
+
+    @property
+    def is_drowned(self) -> bool:
+        return all(not deck.is_alive for deck in self.decks)
+
+    def hit(self, position: Cell) -> None:
+        self.get_deck(position).hit()
 
     def get_deck(self, position: Cell) -> Deck:
         for deck in self.decks:
@@ -29,16 +42,6 @@ class Ship:
                 return deck
         raise ValueError(f"Deck not found at {position}")
 
-    def hit(self, position: Cell) -> None:
-        self.get_deck(position).hit()
-
-    def get_size(self) -> int:
-        return len(self.decks)
-
-    @property
-    def is_drowned(self) -> bool:
-        return all(not deck.is_alive for deck in self.decks)
-
     def __repr__(self) -> str:
         status = SHIP_DROWNED if self.is_drowned else SHIP_AFLOAT
-        return f"Ship(size={self.get_size()}, status={status})"
+        return f"Ship(size={self.size}, status='{status}')"
