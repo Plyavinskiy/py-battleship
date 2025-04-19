@@ -38,3 +38,7 @@ SHOT_HIT = "Hit!"
 SHOT_MISS = "Miss!"
 SHOT_REPEAT = "You already fired at this location."
 SHOT_SUNK = "Sunk!"
+
+# If True, use 0-based coordinates in input and UI.
+# Useful to align UI with internal logic during debugging.
+DEBUG_COORDS = False

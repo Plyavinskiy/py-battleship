@@ -1,4 +1,5 @@
 from app.constants import (
+    DEBUG_COORDS,
     EXPECTED_SHIPS_BY_DECK_SIZE,
     GRID_SIZE,
     SHOT_HIT,
@@ -9,7 +10,7 @@ from app.constants import (
     SYMBOL_AROUND,
     SYMBOL_EMPTY,
     SYMBOL_MISS,
-    SYMBOL_SUNK
+    SYMBOL_SUNK,
 )
 from app.field_utils import get_surrounding_cells
 from app.ship import Ship
@@ -52,11 +53,18 @@ class Battleship:
         return SHOT_MISS
 
     def __str__(self) -> str:
-        header = "   " + " ".join(str(i) for i in range(1, GRID_SIZE + 1))
+        header_range = (
+            range(GRID_SIZE)
+            if DEBUG_COORDS
+            else range(1, GRID_SIZE + 1)
+        )
+        header = "   " + " ".join(str(i) for i in header_range)
         lines = [header]
 
         for row in range(GRID_SIZE):
-            line = f"{row + 1: <2} "
+            prefix = f"{row: <2} " if DEBUG_COORDS else f"{row + 1: <2} "
+            line = prefix
+
             for column in range(GRID_SIZE):
                 position = (row, column)
 
@@ -128,11 +136,11 @@ class Battleship:
             if not ship.is_drowned:
                 continue
 
-            surrounding_cells = get_surrounding_cells(
+            surrounding = get_surrounding_cells(
                 [deck.position for deck in ship.decks]
             )
 
-            if cell in surrounding_cells and cell not in self.field:
+            if cell in surrounding and cell not in self.field:
                 return True
 
         return False
