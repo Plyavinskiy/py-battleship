@@ -1,30 +1,58 @@
-from app.constants import DEBUG_COORDS, GRID_SIZE
+from app.constants import (
+    DEBUG_COORDS,
+    MAX_COORD,
+    MIN_COORD,
+    UI_MAX,
+    UI_MIN,
+)
+from app.types_aliases import Cell
 
 
-def parse_coordinates(user_input: str) -> tuple[int, int] | None:
-    parts = user_input.strip().split()
-    if len(parts) != 2 or not all(part.isdigit() for part in parts):
+def get_coordinate() -> Cell | None:
+    prompt = (
+        f"\nEnter two numbers from {UI_MIN} to {UI_MAX} (e.g. 5 7)\n"
+        f"or 'q' to quit: "
+    )
+    user_input = input(prompt).strip().lower()
+
+    if user_input == "q":
         return None
 
+    parts = validate_input_numbers(user_input)
+    return parse_to_coordinate(parts)
+
+
+def validate_input_numbers(user_input: str) -> list[str]:
+    if not user_input:
+        raise ValueError("No input received")
+
+    parts = user_input.split()
+
+    if len(parts) != 2:
+        raise ValueError("Please enter exactly two numbers")
+
+    if not all(part.isdigit() for part in parts):
+        raise ValueError("Please enter valid numbers")
+
+    return parts
+
+
+def parse_to_coordinate(parts: list[str]) -> Cell:
     row = int(parts[0])
-    column = int(parts[1])
+    col = int(parts[1])
 
     if not DEBUG_COORDS:
         row -= 1
-        column -= 1
+        col -= 1
 
-    return row, column
+    if not is_within_bounds(row, col):
+        raise ValueError(f"Numbers must be between {UI_MIN} and {UI_MAX}")
+
+    return row, col
 
 
-def is_within_bounds(row: int, column: int) -> bool:
-    return 0 <= row < GRID_SIZE and 0 <= column < GRID_SIZE
-
-
-def prompt_for_coordinates() -> tuple[int, int] | None:
-    start_label = "0" if DEBUG_COORDS else "1"
-    prompt = (
-        "\nEnter target (row column, "
-        f"{start_label} to {GRID_SIZE}): "
+def is_within_bounds(row: int, col: int) -> bool:
+    return (
+        MIN_COORD <= row <= MAX_COORD
+        and MIN_COORD <= col <= MAX_COORD
     )
-    user_input = input(prompt)
-    return parse_coordinates(user_input)

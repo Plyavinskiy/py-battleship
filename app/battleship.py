@@ -1,6 +1,6 @@
 from app.constants import (
     DEBUG_COORDS,
-    EXPECTED_SHIPS_BY_DECK_SIZE,
+    EXPECTED_SHIPS,
     GRID_SIZE,
     SHOT_HIT,
     SHOT_MISS,
@@ -14,14 +14,15 @@ from app.constants import (
 )
 from app.field_utils import get_surrounding_cells
 from app.ship import Ship
-from app.types_aliases import Cell, ShipCoords
+from app.types_aliases import Cell, CellSet, ShipPlacements
 
 
 class Battleship:
-    def __init__(self, ships: ShipCoords) -> None:
+    def __init__(self, ships: ShipPlacements) -> None:
         self.ships: list[Ship] = []
         self.field: dict[Cell, Ship] = {}
-        self.shots: set[Cell] = set()
+        self.shots: CellSet = set()
+        self.marked_cells_around_sunk_ships: CellSet = set()
 
         for start, end in ships:
             ship = Ship(start, end)
@@ -48,7 +49,12 @@ class Battleship:
         if target in self.field:
             ship = self.field[target]
             ship.hit(target)
-            return SHOT_SUNK if ship.is_drowned else SHOT_HIT
+
+            if ship.is_drowned:
+                self._surround_sunk_ship(ship)
+                return SHOT_SUNK
+
+            return SHOT_HIT
 
         return SHOT_MISS
 
@@ -62,11 +68,10 @@ class Battleship:
         lines = [header]
 
         for row in range(GRID_SIZE):
-            prefix = f"{row: <2} " if DEBUG_COORDS else f"{row + 1: <2} "
-            line = prefix
+            line = f"{row: <2} " if DEBUG_COORDS else f"{row + 1: <2} "
 
-            for column in range(GRID_SIZE):
-                position = (row, column)
+            for col in range(GRID_SIZE):
+                position = (row, col)
 
                 if position in self.field:
                     ship = self.field[position]
@@ -76,15 +81,14 @@ class Battleship:
                         line += f"{SYMBOL_SUNK} "
                     else:
                         line += f"{SYMBOL_ALIVE} "
+                elif position in self.marked_cells_around_sunk_ships:
+                    line += f"{SYMBOL_AROUND} "
+                elif position in self.shots:
+                    line += f"{SYMBOL_MISS} "
                 else:
-                    if self._should_mark_sunk_area(position):
-                        line += f"{SYMBOL_AROUND} "
-                    elif position in self.shots:
-                        line += f"{SYMBOL_MISS} "
-                    else:
-                        line += f"{SYMBOL_EMPTY} "
+                    line += f"{SYMBOL_EMPTY} "
 
-            lines.append(line.strip())
+            lines.append(line.rstrip())
 
         return "\n".join(lines)
 
@@ -95,22 +99,22 @@ class Battleship:
         )
 
     def _validate_field(self) -> None:
-        expected_total = sum(EXPECTED_SHIPS_BY_DECK_SIZE.values())
-        actual_total = len(self.ships)
+        expected_total_ships = sum(EXPECTED_SHIPS.values())
+        actual_total_ships = len(self.ships)
 
-        if actual_total != expected_total:
+        if actual_total_ships != expected_total_ships:
             raise ValueError(
-                f"{expected_total} ships expected, "
-                f"but found {actual_total}"
+                f"Expected {expected_total_ships} ships, "
+                f"but found {actual_total_ships}."
             )
 
-        ships_by_size = {size: 0 for size in EXPECTED_SHIPS_BY_DECK_SIZE}
+        actual_ships = {size: 0 for size in EXPECTED_SHIPS}
 
         for ship in self.ships:
             size = ship.size
-            if size not in ships_by_size:
+            if size not in actual_ships:
                 raise ValueError(f"Invalid ship size: {size}")
-            ships_by_size[size] += 1
+            actual_ships[size] += 1
 
             for deck in ship.decks:
                 for neighbor in get_surrounding_cells([deck.position]):
@@ -123,24 +127,20 @@ class Battleship:
                             "each other"
                         )
 
-        for size, expected_count in EXPECTED_SHIPS_BY_DECK_SIZE.items():
-            actual_count = ships_by_size[size]
-            if actual_count != expected_count:
+        for size, expected_ship_count in EXPECTED_SHIPS.items():
+            actual_ship_count = actual_ships[size]
+
+            if actual_ship_count != expected_ship_count:
+                unit_label = "ship" if expected_ship_count == 1 else "ships"
                 raise ValueError(
-                    f"{expected_count} ship(s) of size {size} required, "
-                    f"but found {actual_count}"
+                    f"Expected {expected_ship_count} {unit_label} of size "
+                    f"{size}, but found {actual_ship_count}."
                 )
 
-    def _should_mark_sunk_area(self, cell: Cell) -> bool:
-        for ship in self.ships:
-            if not ship.is_drowned:
-                continue
+    def _surround_sunk_ship(self, ship: Ship) -> None:
+        deck_positions = [deck.position for deck in ship.decks]
+        surrounding_cells = get_surrounding_cells(deck_positions)
 
-            surrounding = get_surrounding_cells(
-                [deck.position for deck in ship.decks]
-            )
-
-            if cell in surrounding and cell not in self.field:
-                return True
-
-        return False
+        for cell in surrounding_cells:
+            if cell not in self.field:
+                self.marked_cells_around_sunk_ships.add(cell)

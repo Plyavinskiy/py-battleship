@@ -1,7 +1,7 @@
 from app.battleship import Battleship
-from app.constants import GRID_SIZE, SYMBOL_LEGEND_LINES
-from app.input_utils import is_within_bounds, prompt_for_coordinates
-from app.ship_generator import generate_random_ship_coordinates
+from app.constants import SYMBOL_LEGEND_LINES
+from app.game_loop import play_game
+from app.ship_generator import generate_random_ship_placements
 
 
 def print_symbol_legend() -> None:
@@ -10,38 +10,14 @@ def print_symbol_legend() -> None:
 
 
 def main() -> None:
-    ship_coordinates = generate_random_ship_coordinates()
-    game = Battleship(ship_coordinates)
+    ship_placements = generate_random_ship_placements()
+    game = Battleship(ship_placements)
 
     print("\nWelcome to Battleship!")
     print_symbol_legend()
-    print("\n" + str(game))
+    print(f"\n{game}")
 
-    while not game.is_game_over:
-        try:
-            coordinates = prompt_for_coordinates()
-
-            if coordinates is None:
-                print(f"Please enter two numbers from 1 to {GRID_SIZE}.")
-                continue
-
-            row, column = coordinates
-
-            if not is_within_bounds(row, column):
-                print(f"Coordinates must be between 1 and {GRID_SIZE}.")
-                continue
-
-            result = game.fire((row, column))
-            print(result)
-            print("\n" + str(game))
-
-        except ValueError:
-            print("Invalid input. Please enter two numbers (e.g., 5 7).")
-        except KeyboardInterrupt:
-            print("\nGame aborted.")
-            break
-
-    print("\n🔥 All ships are sunk! Game over!")
+    play_game(game)
 
 
 if __name__ == "__main__":

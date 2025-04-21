@@ -14,15 +14,13 @@ class Deck:
         return self.position[0]
 
     @property
-    def column(self) -> int:
+    def col(self) -> int:
         return self.position[1]
 
     def hit(self) -> None:
-        self.is_alive = False
+        if self.is_alive:
+            self.is_alive = False
 
     def __repr__(self) -> str:
         status = DECK_ALIVE if self.is_alive else DECK_HIT
-        return (
-            f"Deck(row={self.row}, column={self.column}, "
-            f"status='{status}')"
-        )
+        return f'Deck(row={self.row}, col={self.col}, status="{status}")'
